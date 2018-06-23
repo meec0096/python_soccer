@@ -4,7 +4,8 @@ import re
 import os
 import sys
 
-sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
+sys.path.append("/root/python_soccer/")
+#sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "python_soccer.settings")
 
 import django
@@ -126,7 +127,8 @@ def check_for_new_score():
         current_match_score.update(RightScore = int(scores_list[right_team.teamName]))
 
 if __name__ == "__main__":
-    if sys.arv[1] == "insert":
-        insert_today_match()
-    else:
-        check_for_new_score()
+	if sys.argv[1] == "insert":
+		insert_today_match()
+	else:
+		print(get_scores())
+		check_for_new_score()
