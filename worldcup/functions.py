@@ -3,7 +3,7 @@ import requests
 import re
 import os
 import sys
-
+from datetime import datetime
 sys.path.append("/root/python_soccer/")
 #sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "python_soccer.settings")
@@ -16,7 +16,9 @@ from worldcup.models import Team,Match,Scored
 
 def get_scores():
     pageText = requests.get("http://livescores.com").text
+    
     soup = BeautifulSoup(pageText, 'html.parser')
+    # Testing: soup = BeautifulSoup(open(r'testing.html'), 'html.parser')
 
     # get every row in homepage
     worldcupRecords = soup.find_all("div", class_="row-gray")
@@ -36,19 +38,10 @@ def get_scores():
         lplayer_list.append(item.find("div", class_="ply name").text.replace(" ",""))
         scores_list.append(item.find("a").text.replace(" ",""))
 
-    index = - 1
-    score_dict = None
-    # iterate through the minute list to find out if a game is currently playing
-    # if note index == -1
-    minute_list[1] = str(32)
-    for i in range(len(minute_list)):
-        if minute_list[i] != 'FT' and re.compile("[0-9][0-9]+:[0-9][0-9]+").match(minute_list[i]) == None:
-            index = i
-            break
 
-    # if valid game is playing then construct dictionary with info
-    # otherwise return none
-    if index != -1:
+    # Creeate empty list to store dictionary object represent a currently playing game
+    returnScoreList = []
+    for item in get_teams_gen(minute_list):
         score_dict = {
             "rightplayer": str(rplayer_list[index]),
             "leftplayer": str(lplayer_list[index]),
@@ -56,9 +49,23 @@ def get_scores():
             str(lplayer_list[index]): scores_list[index].split("-")[1],
             "minute": str(minute_list[index])   
         }
+        
+        returnScoreList.append(score_dict)
 
-    return score_dict
+    # if no game is playing return None
+    if len(returnScoreList) == 0:
+        return None
+    else:
+        return returnScoreList
 
+# iterate through the minute list to find out if a game is currently playing
+# Not sure if i needed a generator function
+def get_teams_gen(minute_list):
+    i = 0
+    while i < len(minute_list):
+        if minute_list[i] != 'FT' and re.compile("[0-9][0-9]+:[0-9][0-9]+").match(minute_list[i]) == None:
+            yield i
+        i += 1
 # This is gonna be runned at 12:00am every day to update database
 def get_today_match():
     pageText = requests.get("http://www.livescores.com").text
@@ -112,23 +119,37 @@ def insert_today_match():
 
 def check_for_new_score():
     scores_list = get_scores()
-    # No exception should occure due to insert_today_match function
-    right_team = Team.objects.get(pk = scores_list['rightplayer'])
-    left_team = Team.objects.get(pk = scores_list['leftplayer'])
 
-    current_match = Team.objects.get(RightTeam = right_team, LeftTeam = left_team, date=date.now())
+    if len(scores_list) == 0:
+        return None
 
-    current_match_score = Scoreds.objects.get(match = current_match)
+    for item in scores_list:
+        # No exception should occure due to insert_today_match function
+        right_team = Team.objects.get(pk = item['rightplayer'])
+        left_team = Team.objects.get(pk = item['leftplayer'])
 
-    if current_match_score.LeftScore != scores_list[left_team.teamName]:
-        current_match_score.update(LeftScore = int(scores_list[left_team.teamName]))
+        # Given two teams, find the match corresponding match
+        current_match = Match.objects.get(RightTeam = right_team, LeftTeam = left_team, date=datetime.now().date())
 
-    if current_match_score.RightScore != scores_list[right_tream.teamName]:
-        current_match_score.update(RightScore = int(scores_list[right_team.teamName]))
+        #Given match find the correspodning socre
+        current_match_score = Scored.objects.get(match = current_match)
+ 
+        # check to see if the score fetched from website is different
+        # if it is differnt update the database 
+        if current_match_score.leftScore != scores_list[left_team.teamName]:
+            current_match_score.leftScore = int(scores_list[left_team.teamName])
+            current_match_score.save()
+
+        if current_match_score.rightScore != scores_list[right_team.teamName]:
+            current_match_score.rightScore = int(scores_list[right_team.teamName])
+            current_match_score.save()
 
 if __name__ == "__main__":
+
+    print(get_scores())
+    '''
 	if sys.argv[1] == "insert":
 		insert_today_match()
 	else:
-		print(get_scores())
 		check_for_new_score()
+    '''
