@@ -4,8 +4,9 @@ import re
 import os
 import sys
 from datetime import datetime
+
 sys.path.append("/root/python_soccer/")
-#sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
+sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "python_soccer.settings")
 
 import django
@@ -137,15 +138,17 @@ def check_for_new_score():
         # check to see if the score fetched from website is different
         # if it is differnt update the database 
         if current_match_score.leftScore != item[left_team.teamName]:
+            print("left scored")
             current_match_score.leftScore = int(item[left_team.teamName])
             current_match_score.save()
 
         if current_match_score.rightScore != item[right_team.teamName]:
+            print("right scored")
             current_match_score.rightScore = int(item[right_team.teamName])
             current_match_score.save()
 
 if __name__ == "__main__":
-	if sys.argv[1] == "insert":
-		insert_today_match()
-	else:
-		check_for_new_score()
+    if sys.argv[1] == "insert":
+        insert_today_match()
+    else:
+        check_for_new_score()
