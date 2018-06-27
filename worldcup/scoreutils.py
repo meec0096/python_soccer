@@ -5,8 +5,10 @@ import os
 import sys
 from datetime import datetime
 
-sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
+os.chdir('..')
+sys.path.append(os.getcwd())
 '''
+For Mauricio Ubuntu:sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
     For Windows: sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
 '''
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "python_soccer.settings")
