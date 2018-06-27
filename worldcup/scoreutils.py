@@ -39,8 +39,8 @@ def get_scores():
     #Parse information into seperate list
     for item in worldcupRecords:
         minute_list.append(item.find("div", class_="min").text.replace(" ","").replace("'",""))
-        rplayer_list.append(item.find("div", class_="ply tright name").text.replace(" ", ""))
-        lplayer_list.append(item.find("div", class_="ply name").text.replace(" ",""))
+        lplayer_list.append(item.find("div", class_="ply tright name").text.replace(" ", ""))
+        rplayer_list.append(item.find("div", class_="ply name").text.replace(" ",""))
         scores_list.append(item.find("a").text.replace(" ",""))
 
 
