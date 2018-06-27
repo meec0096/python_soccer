@@ -88,8 +88,8 @@ def get_today_match():
 
     for item in worldcupRecords:
         time_list.append(item.find("div", class_="min").text.replace(" ",""))
-        rplayer_list.append(item.find("div", class_="ply tright name").text.replace(" ", ""))
-        lplayer_list.append(item.find("div", class_="ply name").text.replace(" ",""))
+        lplayer_list.append(item.find("div", class_="ply tright name").text.replace(" ", ""))
+        rplayer_list.append(item.find("div", class_="ply name").text.replace(" ",""))
 
     return rplayer_list, lplayer_list, time_list
 
