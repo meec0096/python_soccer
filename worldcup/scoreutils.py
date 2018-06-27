@@ -5,8 +5,10 @@ import os
 import sys
 from datetime import datetime
 
-sys.path.append("/root/python_soccer/")
-sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
+sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
+'''
+    For Windows: sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
+'''
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "python_soccer.settings")
 
 import django
@@ -99,7 +101,6 @@ def insert_today_match():
 
         #Find out if the team is already in database, if not insert team to database    
         try:
-            print(rplayer[i], lplayer[i])
             right_team = Team.objects.get(pk=rplayer[i])
             left_team =  Team.objects.get(pk=lplayer[i])
         except ObjectDoesNotExist:
@@ -119,6 +120,8 @@ def insert_today_match():
         add_score.save()
 
 def check_for_new_score():
+    # file is for log checking during cronjob
+    log = open("log.txt", "a")
     scores_list = get_scores()
 
     if scores_list == None:
@@ -126,19 +129,26 @@ def check_for_new_score():
 
     for item in scores_list:
         # No exception should occure due to insert_today_match function
-        right_team = Team.objects.get(pk = item['rightplayer'])
-        left_team = Team.objects.get(pk = item['leftplayer'])
+        try:
+            right_team = Team.objects.get(pk = item['rightplayer'])
+            left_team = Team.objects.get(pk = item['leftplayer'])
+        except BaseException as e:
+            print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)
 
         # Given two teams, find the match corresponding match
-        current_match = Match.objects.get(RightTeam = right_team, LeftTeam = left_team, date=datetime.now().date())
-
+        try:
+            current_match = Match.objects.get(RightTeam = right_team, LeftTeam = left_team, date=datetime.now().date())
+        except BaseException as e:
+            print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)
         #Given match find the correspodning socre
-        current_match_score = Scored.objects.get(match = current_match)
- 
+        try:
+            current_match_score = Scored.objects.get(match = current_match)
+        except BaseException as e:
+            print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)
+
         # check to see if the score fetched from website is different
         # if it is differnt update the database 
         if current_match_score.leftScore != item[left_team.teamName]:
-            print("left scored")
             current_match_score.leftScore = int(item[left_team.teamName])
             current_match_score.save()
 
