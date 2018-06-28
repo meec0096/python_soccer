@@ -3,7 +3,8 @@ import requests
 import re
 import os
 import sys
-from datetime import datetime
+from datetime import datetime,date
+from pytz import timezone
 
 os.chdir('..')
 sys.path.append(os.getcwd())
@@ -45,6 +46,7 @@ def get_scores():
 
 
     # Creeate empty list to store dictionary object represent a currently playing game
+    print(scores_list)
     returnScoreList = []
     for item in get_teams_gen(minute_list):
         score_dict = {
@@ -96,6 +98,7 @@ def get_today_match():
 # only execute @ 12:00 am
 def insert_today_match():
     rplayer, lplayer, time = get_today_match()
+    tz = timezone('EST')
 
     for i in range(len(rplayer)):
         right_team = None
@@ -115,7 +118,9 @@ def insert_today_match():
                 left_team.save()
         
         #insert match for today into database
-        insert_match = Match(RightTeam = right_team, LeftTeam = left_team)
+        right_now = datetime.now(tz)
+        today_date = date(right_now.year, right_now.month, right_now.day)
+        insert_match = Match(RightTeam = right_team, LeftTeam = left_team, date = today_date)
         insert_match.save()
 
         add_score = Scored(match = insert_match)
@@ -128,18 +133,22 @@ def check_for_new_score():
 
     if scores_list == None:
         return None
-
+    tz = timezone('EST')
     for item in scores_list:
         # No exception should occure due to insert_today_match function
         try:
+            print("Right Team: ", item['rightplayer'])
+            print("Left Team: ", item['leftplayer'])
             right_team = Team.objects.get(pk = item['rightplayer'])
             left_team = Team.objects.get(pk = item['leftplayer'])
         except BaseException as e:
             print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)
-
         # Given two teams, find the match corresponding match
+        print(left_team.teamName)
         try:
-            current_match = Match.objects.get(RightTeam = right_team, LeftTeam = left_team, date=datetime.now().date())
+            right_now = datetime.now(tz)
+            today_date = date(right_now.year, right_now.month, right_now.day)
+            current_match = Match.objects.get(RightTeam = right_team, LeftTeam = left_team, date = today_date)
         except BaseException as e:
             print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)
         #Given match find the correspodning socre
