@@ -7,7 +7,7 @@ class Team(models.Model):
     totalGoals = models.IntegerField(default = 0)
 
     def __str__(self):
-        return "Team: " + self.teamName 
+        return self.teamName 
 
 class Match(models.Model):
     RightTeam = models.ForeignKey( Team, related_name = "rightteam",on_delete = models.CASCADE )
@@ -15,7 +15,7 @@ class Match(models.Model):
     date = models.DateField()
 
     def __str__(self):
-        return "Match <" + str(self.date) + "> : " + self.LeftTeam.teamName + " vs. " + self.RightTeam.teamName
+        return "[ " + str(self.date) + "] : " + self.LeftTeam.teamName + " vs. " + self.RightTeam.teamName
 
 class Scored(models.Model):
     match = models.ForeignKey(Match, on_delete = models.CASCADE)
@@ -23,6 +23,6 @@ class Scored(models.Model):
     rightScore = models.IntegerField(default = 0)
 
     def __str__(self):
-        return str(self.leftScore) +  " " + str(self.rightScore)
+        return  self.match.LeftTeam.teamName + " : "+ str(self.leftScore) +  "-" + str(self.rightScore) + " : " + self.match.RightTeam.teamName
 
 # Create your models here.
