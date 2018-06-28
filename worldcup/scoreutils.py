@@ -45,14 +45,13 @@ def get_scores():
 
 
     # Creeate empty list to store dictionary object represent a currently playing game
-    print(scores_list)
     returnScoreList = []
     for item in get_teams_gen(minute_list):
         score_dict = {
             "rightplayer": str(rplayer_list[item]),
             "leftplayer": str(lplayer_list[item]),
-            str(rplayer_list[item]): scores_list[item].split("-")[0],
-            str(lplayer_list[item]): scores_list[item].split("-")[1],
+            str(lplayer_list[item]): scores_list[item].split("-")[0],
+            str(rplayer_list[item]): scores_list[item].split("-")[1],
             "minute": str(minute_list[item])   
         }
         
@@ -141,15 +140,14 @@ def check_for_new_score():
             right_team = Team.objects.get(pk = item['rightplayer'])
             left_team = Team.objects.get(pk = item['leftplayer'])
         except BaseException as e:
-            print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)
+            print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)   
         # Given two teams, find the match corresponding match
-        print(left_team.teamName)
         try:
             right_now = datetime.now(tz)
             today_date = date(right_now.year, right_now.month, right_now.day)
             current_match = Match.objects.get(RightTeam = right_team, LeftTeam = left_team, date = today_date)
         except BaseException as e:
-            print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)
+            print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)  
         #Given match find the correspodning socre
         try:
             current_match_score = Scored.objects.get(match = current_match)
