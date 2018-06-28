@@ -6,8 +6,7 @@ import sys
 from datetime import datetime,date
 from pytz import timezone
 
-os.chdir('..')
-sys.path.append(os.getcwd())
+sys.path.append('/root/python_soccer')
 '''
 For Mauricio Ubuntu:sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
     For Windows: sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
@@ -24,7 +23,7 @@ def get_scores():
     pageText = requests.get("http://livescores.com").text
     
     soup = BeautifulSoup(pageText, 'html.parser')
-    #soup = BeautifulSoup(open(r'testing.html'), 'html.parser')
+    #soup = BeautifulSoup(open(r"/root/python_soccer/worldcup/mauricio.html"), 'html.parser')
 
     # get every row in homepage
     worldcupRecords = soup.find_all("div", class_="row-gray")
