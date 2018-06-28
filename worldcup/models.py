@@ -12,7 +12,7 @@ class Team(models.Model):
 class Match(models.Model):
     RightTeam = models.ForeignKey( Team, related_name = "rightteam",on_delete = models.CASCADE )
     LeftTeam = models.ForeignKey( Team, related_name = "leftteam", on_delete = models.CASCADE ) 
-    date = models.DateField(default = datetime.now, blank=True)
+    date = models.DateField()
 
     def __str__(self):
         return "Match <" + str(self.date) + "> : " + self.LeftTeam.teamName + " vs. " + self.RightTeam.teamName
