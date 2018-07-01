@@ -1,1 +1,5 @@
 env/
+.vscode/
+db.sqlite3
+*pyc
+worldcup/migrations/

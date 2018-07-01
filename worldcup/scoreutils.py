@@ -6,7 +6,8 @@ import sys
 from datetime import datetime,date
 from pytz import timezone
 
-sys.path.append('/root/python_soccer')
+#sys.path.append('/root/python_soccer')
+sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
 '''
 For Mauricio Ubuntu:sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
     For Windows: sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
@@ -95,13 +96,14 @@ def get_today_match():
 
 # only execute @ 12:00 am
 def insert_today_match():
+    log = open("log.txt", "a")
     rplayer, lplayer, time = get_today_match()
+    
     tz = timezone('EST')
 
     for i in range(len(rplayer)):
         right_team = None
         left_team = None
-
         #Find out if the team is already in database, if not insert team to database    
         try:
             right_team = Team.objects.get(pk=rplayer[i])
@@ -110,20 +112,30 @@ def insert_today_match():
             if right_team == None:
                 right_team = Team(pk = rplayer[i], isEliminated = False, totalGoals = 0)
                 right_team.save()
-            
+                logstring = "right_team '" + rplayer[i] + "' does not exist. Inserting..."
+                write_to_log(datetime.now(tz), "insert_today_match", logstring, log)
+
             if left_team == None:
                 left_team = Team(pk = lplayer[i], isEliminated = False, totalGoals = 0)
                 left_team.save()
-        
+                logstring = "left_team '" + lplayer[i] + "' does not exist. Inserting..."
+                write_to_log(datetime.now(tz), "insert_today_match", logstring, log)
+
         #insert match for today into database
         right_now = datetime.now(tz)
         today_date = date(right_now.year, right_now.month, right_now.day)
+        
         insert_match = Match(RightTeam = right_team, LeftTeam = left_team, date = today_date)
         insert_match.save()
+        
+        write_to_log(datetime.now(tz), "insert_today_match", "CREATING Match Object...", log)
 
         add_score = Scored(match = insert_match)
         add_score.save()
+        
+        write_to_log(datetime.now(tz), "insert_today_match", "CREATING Scored Object...", log)
 
+    log.close()
 def check_for_new_score():
     # file is for log checking during cronjob
     log = open("log.txt", "a")
@@ -131,29 +143,27 @@ def check_for_new_score():
 
     if scores_list == None:
         return None
+
     tz = timezone('EST')
     for item in scores_list:
         # No exception should occure due to insert_today_match function
         try:
-            print("Right Team: ", item['rightplayer'])
-            print("Left Team: ", item['leftplayer'])
             right_team = Team.objects.get(pk = item['rightplayer'])
             left_team = Team.objects.get(pk = item['leftplayer'])
         except BaseException as e:
-            print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)   
+            write_to_log(datetime.now(tz), "check_for_new_score", str(e), log)
         # Given two teams, find the match corresponding match
         try:
             right_now = datetime.now(tz)
             today_date = date(right_now.year, right_now.month, right_now.day)
             current_match = Match.objects.get(RightTeam = right_team, LeftTeam = left_team, date = today_date)
         except BaseException as e:
-            print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)  
+            write_to_log(datetime.now(tz), "check_for_new_score", str(e), log)
         #Given match find the correspodning socre
         try:
             current_match_score = Scored.objects.get(match = current_match)
         except BaseException as e:
-            print("{0} : {1} " .format( datetime.now().strftime("[ %m-%d-%Y ] %H:%M:%S"), str(e)),file=log)
-
+            write_to_log(datetime.now(tz), "check_for_new_score", str(e), log)
         # check to see if the score fetched from website is different
         # if it is differnt update the database 
         if current_match_score.leftScore != item[left_team.teamName]:
@@ -161,9 +171,14 @@ def check_for_new_score():
             current_match_score.save()
 
         if current_match_score.rightScore != item[right_team.teamName]:
-            print("right scored")
             current_match_score.rightScore = int(item[right_team.teamName])
             current_match_score.save()
+
+    log.close()
+
+def write_to_log(stddate, function, logstring, log):
+      print("{0} : function: {1} : {2}" .format(stddate.strftime("[ %m-%d-%Y ] %H:%M:%S"), function , logstring),file=log)
+
 
 if __name__ == "__main__":
     if sys.argv[1] == "insert":
