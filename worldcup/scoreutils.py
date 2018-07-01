@@ -6,8 +6,8 @@ import sys
 from datetime import datetime,date
 from pytz import timezone
 
-#sys.path.append('/root/python_soccer')
-sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
+sys.path.append('/root/python_soccer')
+#sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
 '''
 For Mauricio Ubuntu:sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
     For Windows: sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
@@ -99,7 +99,7 @@ def insert_today_match():
     log = open("log.txt", "a")
     rplayer, lplayer, time = get_today_match()
     
-    tz = timezone('EST')
+    tz = timezone('America/New_York')
 
     for i in range(len(rplayer)):
         right_team = None
@@ -144,7 +144,7 @@ def check_for_new_score():
     if scores_list == None:
         return None
 
-    tz = timezone('EST')
+    tz = timezone('America/New_York')
     for item in scores_list:
         # No exception should occure due to insert_today_match function
         try:
