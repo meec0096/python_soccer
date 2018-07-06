@@ -76,8 +76,9 @@ def get_today_match():
 
 def getWorldCupRecords():
     #intializing beautiful soup for parsing
-    #pageText = requests.get("http://www.livescores.com").text
-    soup = BeautifulSoup(open("server.html","r"), 'html.parser')
+    pageText = requests.get("http://www.livescores.com/worldcup/").text
+    soup = BeautifulSoup(pageText, 'html.parser')
+    print(soup.prettify())
     # get every row in the homepage and narrow down links to those that only pertain
     # to the worldcup
     worldcupRecords = soup.find_all("div", class_="row-gray")
@@ -154,10 +155,14 @@ def check_for_new_score():
 
         if current_match_score.leftScore != item[left_team.teamName]:
             current_match_score.leftScore = int(item[left_team.teamName])
+            left_team.totalGoals += 1
+            left_team.save()
             current_match_score.save()
 
         if current_match_score.rightScore != item[right_team.teamName]:
             current_match_score.rightScore = int(item[right_team.teamName])
+            right_team.totalGoals += 1
+            right_team.save()
             current_match_score.save()
 
     log.close()
