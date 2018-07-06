@@ -1,17 +1,15 @@
 from bs4 import BeautifulSoup
 import requests
-import re
 import os
 import sys
-from datetime import datetime,date
+import re
+from datetime import datetime,date,time
 from pytz import timezone
 
-sys.path.append('/root/python_soccer')
-#sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
-'''
-For Mauricio Ubuntu:sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
-    For Windows: sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
-'''
+''' system path for ubuntu server, ubuntu laptop, and windows laptop. '''
+#sys.path.append('/root/python_soccer')
+sys.path.append("/home/mauricio/Documents/python_class/python_soccer")
+#sys.path.append("/mnt/c/Users/meec/Documents/pythonproj/python_soccer")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "python_soccer.settings")
 
 import django
@@ -21,151 +19,139 @@ from django.core.exceptions import ObjectDoesNotExist
 from worldcup.models import Team,Match,Scored
 
 def get_scores():
-    pageText = requests.get("http://livescores.com").text
-    
-    soup = BeautifulSoup(pageText, 'html.parser')
-    #soup = BeautifulSoup(open(r"/root/python_soccer/worldcup/mauricio.html"), 'html.parser')
-
-    # get every row in homepage
-    worldcupRecords = soup.find_all("div", class_="row-gray")
-
-    # narrow down links to those that only pertain to World Cup
-    worldcupRecords = [item for item in worldcupRecords if item.find("a",href=re.compile("worldcup"))]
+    worldcupRecords = getWorldCupRecords()
 
     minute_list = []
     rplayer_list = []
-    lplayer_list = [] 
+    lplayer_list = []
     scores_list = []
 
-    #Parse information into seperate list
+    # Parse information into seperate list
     for item in worldcupRecords:
-        minute_list.append(item.find("div", class_="min").text.replace(" ","").replace("'",""))
+        minute_list.append(item.find("div", class_="min").text.replace(" ","").replace("'", ""))
         lplayer_list.append(item.find("div", class_="ply tright name").text.replace(" ", ""))
-        rplayer_list.append(item.find("div", class_="ply name").text.replace(" ",""))
-        scores_list.append(item.find("a").text.replace(" ",""))
+        rplayer_list.append(item.find("div", class_="ply name").text.replace(" ", ""))
+        scores_list.append(item.find("a").text.replace(" ", ""))
 
-
-    # Creeate empty list to store dictionary object represent a currently playing game
     returnScoreList = []
+    # for every match that is currently playing append it to returnScoreList 
     for item in get_teams_gen(minute_list):
         score_dict = {
             "rightplayer": str(rplayer_list[item]),
             "leftplayer": str(lplayer_list[item]),
             str(lplayer_list[item]): scores_list[item].split("-")[0],
             str(rplayer_list[item]): scores_list[item].split("-")[1],
-            "minute": str(minute_list[item])   
+            "minute": str(minute_list[item])
         }
-        
         returnScoreList.append(score_dict)
-
-    # if no game is playing return None
+    
+    # if no game is playing return none
     if len(returnScoreList) == 0:
         return None
     else:
         return returnScoreList
-
-# iterate through the minute list to find out if a game is currently playing
-# Not sure if i needed a generator function
+##------------------------------------------------------------###
 def get_teams_gen(minute_list):
     i = 0
     while i < len(minute_list):
         if minute_list[i] != 'FT' and re.compile("[0-9][0-9]+:[0-9][0-9]+").match(minute_list[i]) == None:
             yield i
         i += 1
-# This is gonna be runned at 12:00am every day to update database
+##----------------------------------------------------------###
 def get_today_match():
-    pageText = requests.get("http://www.livescores.com").text
-    soup = BeautifulSoup(pageText, 'html.parser')
-
-    # get every row in homepage
-    worldcupRecords = soup.find_all("div", class_="row-gray")
-
-    # narrow down links to those that only pertain to World Cup
-    worldcupRecords = [item for item in worldcupRecords if item.find("a",href=re.compile("worldcup"))]
+    #Get valid world cup records 
+    worldcupRecords = getWorldCupRecords()
 
     rplayer_list = []
     lplayer_list = []
     time_list = []
 
     for item in worldcupRecords:
-        time_list.append(item.find("div", class_="min").text.replace(" ",""))
+        time_list.append(item.find("div", class_="min").text.replace(" ","").replace("'",""))
         lplayer_list.append(item.find("div", class_="ply tright name").text.replace(" ", ""))
         rplayer_list.append(item.find("div", class_="ply name").text.replace(" ",""))
 
-    return rplayer_list, lplayer_list, time_list
+    return rplayer_list, lplayer_list, time_list    
 
-# only execute @ 12:00 am
+
+def getWorldCupRecords():
+    #intializing beautiful soup for parsing
+    #pageText = requests.get("http://www.livescores.com").text
+    soup = BeautifulSoup(open("server.html","r"), 'html.parser')
+    # get every row in the homepage and narrow down links to those that only pertain
+    # to the worldcup
+    worldcupRecords = soup.find_all("div", class_="row-gray")
+    worldcupRecords = [item for item in worldcupRecords if item.find("a", href=re.compile("worldcup"))]
+    return worldcupRecords
+
 def insert_today_match():
+    tz = timezone("America/New_York")
     log = open("log.txt", "a")
-    rplayer, lplayer, time = get_today_match()
-    
-    tz = timezone('America/New_York')
+    right_now = datetime.now(tz)
+    today_date = date(right_now.year, right_now.month, right_now.day)
 
-    for i in range(len(rplayer)):
+    rplayer, lplayer, time_list = get_today_match()
+    for index in range(len(rplayer)):
         right_team = None
         left_team = None
-        #Find out if the team is already in database, if not insert team to database    
+        
+        # check if team exist, if not insert into database
         try:
-            right_team = Team.objects.get(pk=rplayer[i])
-            left_team =  Team.objects.get(pk=lplayer[i])
+            right_team =  Team.objects.get(pk = rplayer[index])
+            left_team = Team.objects.get(pk = lplayer[index])
         except ObjectDoesNotExist:
             if right_team == None:
-                right_team = Team(pk = rplayer[i], isEliminated = False, totalGoals = 0)
+                right_team = Team(pk = rplayer[index])
+                logstring = "right_team '" + rplayer[index] + "' does not exist. Inserting..."
+                write_to_log(datetime.now(tz), "insert_today_match", logstring, log)
                 right_team.save()
-                logstring = "right_team '" + rplayer[i] + "' does not exist. Inserting..."
-                write_to_log(datetime.now(tz), "insert_today_match", logstring, log)
 
+            
             if left_team == None:
-                left_team = Team(pk = lplayer[i], isEliminated = False, totalGoals = 0)
-                left_team.save()
-                logstring = "left_team '" + lplayer[i] + "' does not exist. Inserting..."
+                left_team = Team(pk = lplayer[index])
+                logstring = "left_team '" + lplayer[index] + "' does not exist. Inserting..."
                 write_to_log(datetime.now(tz), "insert_today_match", logstring, log)
-
-        #insert match for today into database
-        right_now = datetime.now(tz)
-        today_date = date(right_now.year, right_now.month, right_now.day)
+                left_team.save()
         
-        insert_match = Match(RightTeam = right_team, LeftTeam = left_team, date = today_date)
+        convert_time = datetime.strptime(time_list[index], "%H:%M")
+        print(convert_time)
+        start_time = time(convert_time.hour, convert_time.minute)
+        insert_match = Match(RightTeam = right_team, LeftTeam = left_team, date = today_date, startTime = start_time)
         insert_match.save()
-        
-        write_to_log(datetime.now(tz), "insert_today_match", "CREATING Match Object...", log)
 
-        add_score = Scored(match = insert_match)
-        add_score.save()
-        
-        write_to_log(datetime.now(tz), "insert_today_match", "CREATING Scored Object...", log)
+        insert_score = Scored(match = insert_match)
+        insert_score.save()
 
     log.close()
+
 def check_for_new_score():
-    # file is for log checking during cronjob
+    tz = timezone("America/New_York")
     log = open("log.txt", "a")
+    right_now = datetime.now(tz)
+    today_date = date(right_now.year, right_now.month, right_now.day)
+
     scores_list = get_scores()
 
     if scores_list == None:
         return None
-
-    tz = timezone('America/New_York')
+    
     for item in scores_list:
-        # No exception should occure due to insert_today_match function
         try:
             right_team = Team.objects.get(pk = item['rightplayer'])
             left_team = Team.objects.get(pk = item['leftplayer'])
         except BaseException as e:
-            write_to_log(datetime.now(tz), "check_for_new_score", str(e), log)
-        # Given two teams, find the match corresponding match
+             write_to_log(datetime.now(tz), "check_for_new_score", str(e), log)
+
         try:
-            right_now = datetime.now(tz)
-            today_date = date(right_now.year, right_now.month, right_now.day)
-            current_match = Match.objects.get(RightTeam = right_team, LeftTeam = left_team, date = today_date)
+            current_match = Match.objects.get(LeftTeam = left_team, RightTeam = right_team, date = today_date)
         except BaseException as e:
             write_to_log(datetime.now(tz), "check_for_new_score", str(e), log)
-        #Given match find the correspodning socre
+
         try:
             current_match_score = Scored.objects.get(match = current_match)
         except BaseException as e:
             write_to_log(datetime.now(tz), "check_for_new_score", str(e), log)
-        # check to see if the score fetched from website is different
-        # if it is differnt update the database 
+
         if current_match_score.leftScore != item[left_team.teamName]:
             current_match_score.leftScore = int(item[left_team.teamName])
             current_match_score.save()
@@ -177,11 +163,15 @@ def check_for_new_score():
     log.close()
 
 def write_to_log(stddate, function, logstring, log):
-      print("{0} : function: {1} : {2}" .format(stddate.strftime("[ %m-%d-%Y ] %H:%M:%S"), function , logstring),file=log)
-
+      print("{0} : function: {1}: \n\t{2}" .format(stddate.strftime("[ %m-%d-%Y ] %H:%M:%S"), function , logstring),file=log)
 
 if __name__ == "__main__":
+
+    print(get_scores())
+
+    '''
     if sys.argv[1] == "insert":
         insert_today_match()
     else:
         check_for_new_score()
+    '''

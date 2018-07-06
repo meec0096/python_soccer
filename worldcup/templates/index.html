@@ -3,6 +3,7 @@
 {% url 'scores' as scores %}
 {% url 'twitter' as twitter %}
 {% url 'index' as homepage %}
+{% url 'teams' as teams %}
 
 <html lang="en">
     <head>
@@ -25,6 +26,10 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{twitter}}"> Twitter Feed</a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{teams}}"> Teams</a>
+                </li>
+
             </ul>
         </div>
     </nav>
@@ -47,7 +52,7 @@
 
 
     <h2> Today's Matches </h2>
-    <table class="table">
+    <table class="table table-hover">
         <thead>
             <tr>
                 <th scope ="col"> Time </th>

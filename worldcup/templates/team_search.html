@@ -32,24 +32,9 @@
           </ul>
         </div>
     </nav>
-    <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Minute</th>
-            <th scope="col">Match</th>
-            <th scope="col">Score</th>
-          </tr>
-        </thead>
-        {% for match in score_list %}
-            <tbody>
-            <tr>
-                <td> {{ match.curr_match.date }}</td>
-                <td> {{ match.minute }} </td>
-                <td> {{ match.curr_match.LeftTeam}} vs. {{ match.curr_match.RightTeam }}</td>
-                <td> {{ match.score.leftScore }} - {{ match.score.rightScore}} </td>
-            </tr>
-            </tbody>
-        {% endfor %}
-      </table>
-</html>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Submit" />
+    </form>

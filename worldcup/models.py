@@ -13,9 +13,13 @@ class Match(models.Model):
     RightTeam = models.ForeignKey( Team, related_name = "rightteam",on_delete = models.CASCADE )
     LeftTeam = models.ForeignKey( Team, related_name = "leftteam", on_delete = models.CASCADE ) 
     date = models.DateField()
+    startTime = models.TimeField()
 
     def __str__(self):
-        return "[ " + str(self.date) + "] : " + self.LeftTeam.teamName + " vs. " + self.RightTeam.teamName
+        return "[ " + str(self.date) + " ] : " + str(self.LeftTeam.teamName) + " vs. " + str(self.RightTeam.teamName)
+
+    class Meta:
+        unique_together = (("RightTeam", "LeftTeam", "date"),)
 
 class Scored(models.Model):
     match = models.ForeignKey(Match, on_delete = models.CASCADE)
@@ -23,6 +27,9 @@ class Scored(models.Model):
     rightScore = models.IntegerField(default = 0)
 
     def __str__(self):
-        return  self.match.LeftTeam.teamName + " : "+ str(self.leftScore) +  "-" + str(self.rightScore) + " : " + self.match.RightTeam.teamName
+        return  str(self.match.LeftTeam.teamName) + " : "+ str(self.leftScore) +  "-" + str(self.rightScore) + " : " + self.match.RightTeam.teamName
+
+    class Meta:
+        unique_together = (("match"),)
 
 # Create your models here.
