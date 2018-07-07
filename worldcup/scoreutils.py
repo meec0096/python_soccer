@@ -57,6 +57,7 @@ def get_teams_gen(minute_list):
         if minute_list[i] != 'FT' and re.compile("[0-9][0-9]+:[0-9][0-9]+").match(minute_list[i]) == None:
             yield i
         i += 1
+        
 ##----------------------------------------------------------###
 def get_today_match():
     #Get valid world cup records 
@@ -76,9 +77,8 @@ def get_today_match():
 
 def getWorldCupRecords():
     #intializing beautiful soup for parsing
-    pageText = requests.get("http://www.livescores.com/worldcup/").text
+    pageText = requests.get("http://www.livescores.com").text
     soup = BeautifulSoup(pageText, 'html.parser')
-    print(soup.prettify())
     # get every row in the homepage and narrow down links to those that only pertain
     # to the worldcup
     worldcupRecords = soup.find_all("div", class_="row-gray")
@@ -114,7 +114,11 @@ def insert_today_match():
                 write_to_log(datetime.now(tz), "insert_today_match", logstring, log)
                 left_team.save()
         
-        convert_time = datetime.strptime(time_list[index], "%H:%M")
+        convert_time = None
+        try:
+            convert_time = datetime.strptime(time_list[index], "%H:%M")
+        except BaseException:
+            convert_time = time(0,0)
         print(convert_time)
         start_time = time(convert_time.hour, convert_time.minute)
         insert_match = Match(RightTeam = right_team, LeftTeam = left_team, date = today_date, startTime = start_time)
@@ -171,12 +175,7 @@ def write_to_log(stddate, function, logstring, log):
       print("{0} : function: {1}: \n\t{2}" .format(stddate.strftime("[ %m-%d-%Y ] %H:%M:%S"), function , logstring),file=log)
 
 if __name__ == "__main__":
-
-    print(get_scores())
-
-    '''
     if sys.argv[1] == "insert":
         insert_today_match()
     else:
         check_for_new_score()
-    '''

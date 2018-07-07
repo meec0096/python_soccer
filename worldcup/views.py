@@ -12,16 +12,7 @@ from .forms import search_team_form
 def scores(request):
     score_list = get_scores()
     score_list1 = []
-    if score_list == None:
-        scores_dict = {
-                'lteam': "None",
-                'rteam': "None",
-                'curr_match': "No team is currently playing",
-                'score': "None",
-                'minute': "None"
-        }
-        score_list1.append(scores_dict)
-    else:
+    if score_list != None:
         string = ""
         for item in score_list:
             lteam = Team.objects.get(pk = item['leftplayer'])
@@ -39,6 +30,8 @@ def scores(request):
             }
 
             score_list1.append(scores_dict)
+
+        print("length:", len(score_list1))
 
     return render(request, 'scores.html', {'score_list':score_list1 })
 
@@ -76,4 +69,6 @@ def search_team(request):
         form = search_team_form()
 
     return render(request, 'team_search.html', {'form': form})
+
+
 # Create your views here. 

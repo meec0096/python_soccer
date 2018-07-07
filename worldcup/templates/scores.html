@@ -9,7 +9,7 @@
 <html lang="en">
     <head>
         <title> Live World Cup Scores</title>
-        <meta charset="utf-8" />
+        <meta charset="utf-8" http-equiv="refresh" content="5"/>
         <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" type="text/css">
     </head>
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -41,15 +41,24 @@
             <th scope="col">Score</th>
           </tr>
         </thead>
-        {% for match in score_list %}
+        {% if score_list|length == 0 %}
+          <tr>
+              <td> None </td>
+              <td> None </td>
+              <td> None </td>
+              <td> None </td>
+          </tr>
+        {% else %}
+          {% for match in score_list %}
             <tbody>
-            <tr>
-                <td> {{ match.curr_match.date }}</td>
-                <td> {{ match.minute }} </td>
-                <td> {{ match.curr_match.LeftTeam}} vs. {{ match.curr_match.RightTeam }}</td>
-                <td> {{ match.score.leftScore }} - {{ match.score.rightScore}} </td>
-            </tr>
+              <tr>
+                  <td> {{ match.curr_match.date }}</td>
+                  <td> {{ match.minute }} </td>
+                  <td> {{ match.curr_match.LeftTeam}} vs. {{ match.curr_match.RightTeam }}</td>
+                  <td> {{ match.score.leftScore }} - {{ match.score.rightScore}} </td>
+              </tr>
             </tbody>
-        {% endfor %}
+          {% endfor %}
+        {% endif %}
       </table>
 </html>
